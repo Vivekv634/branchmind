@@ -1,0 +1,86 @@
+{
+  "name": "branchmind",
+  "displayName": "BranchMind",
+  "description": "AI-powered Git branch advisor. Local-first inference, privacy by architecture.",
+  "version": "0.1.0",
+  "publisher": "vertexbit",
+  "engines": {
+    "vscode": "^1.115.0"
+  },
+  "categories": [
+    "Other",
+    "SCM Providers"
+  ],
+  "keywords": [
+    "git",
+    "branch",
+    "ai",
+    "ollama",
+    "local-llm"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vivek/branchmind"
+  },
+  "bugs": {
+    "url": "https://github.com/vivek/branchmind/issues"
+  },
+  "activationEvents": [
+    "workspaceContains:.git"
+  ],
+  "icon": "icon.png",
+  "main": "./dist/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "branchmind",
+          "title": "BranchMind",
+          "icon": "$(git-branch)"
+        }
+      ]
+    },
+    "views": {
+      "branchmind": [
+        {
+          "type": "webview",
+          "id": "branchmind.sidebar",
+          "name": "BranchMind"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "branchmind.selectModel",
+        "title": "BranchMind: Select Local Model"
+      },
+      {
+        "command": "branchmind.rescan",
+        "title": "BranchMind: Re-scan for Local Models"
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "node esbuild.config.js",
+    "watch": "node esbuild.config.js --watch",
+    "lint": "eslint src --ext .ts",
+    "pretest": "node esbuild.config.js && tsc -p tsconfig.test.json --outDir out",
+    "test": "node out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^25.6.0",
+    "@types/vscode": "^1.115.0",
+    "@typescript-eslint/eslint-plugin": "^8.58.2",
+    "@typescript-eslint/parser": "^8.58.2",
+    "@vscode/test-electron": "^2.5.2",
+    "esbuild": "^0.28.0",
+    "eslint": "^10.2.0",
+    "glob": "^13.0.6",
+    "mocha": "^11.7.5",
+    "typescript": "^6.0.2"
+  },
+  "dependencies": {
+    "simple-git": "^3.36.0"
+  }
+}

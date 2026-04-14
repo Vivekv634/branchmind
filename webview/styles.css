@@ -1,0 +1,282 @@
+:root {
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --radius: 4px;
+  --green: #4caf50;
+  --amber: #ff9800;
+  --red: #f44336;
+  --blue: #2196f3;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+  color: var(--vscode-foreground);
+  background: var(--vscode-sideBar-background);
+  padding: var(--spacing-sm);
+  line-height: 1.4;
+}
+
+/* ── Loading ── */
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  gap: var(--spacing-md);
+}
+
+.spinner {
+  width: 24px; height: 24px;
+  border: 2px solid var(--vscode-foreground);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Panel ── */
+.panel { display: flex; flex-direction: column; gap: var(--spacing-md); }
+
+/* ── Cards ── */
+.tip-card {
+  display: flex;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  background: var(--vscode-editor-inactiveSelectionBackground);
+  border-radius: var(--radius);
+  border-left: 3px solid var(--blue);
+}
+
+.score-card {
+  padding: var(--spacing-lg);
+  border-radius: var(--radius);
+  text-align: center;
+  border: 1px solid var(--vscode-panel-border);
+}
+
+.score-card.score-green { border-color: var(--green); }
+.score-card.score-amber { border-color: var(--amber); }
+.score-card.score-red   { border-color: var(--red); }
+
+.score-number {
+  font-size: 2.5em;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.score-card.score-green .score-number { color: var(--green); }
+.score-card.score-amber .score-number { color: var(--amber); }
+.score-card.score-red   .score-number { color: var(--red); }
+
+.score-max { font-size: 0.5em; opacity: 0.6; }
+.score-reason { margin-top: var(--spacing-xs); opacity: 0.75; font-size: 0.85em; }
+
+.active-branch-card {
+  padding: var(--spacing-md);
+  background: var(--vscode-editor-inactiveSelectionBackground);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.active-branch-name { font-weight: 600; font-size: 1.05em; }
+.active-branch-meta { display: flex; gap: var(--spacing-sm); font-size: 0.8em; opacity: 0.7; }
+.last-commit { font-size: 0.8em; font-style: italic; }
+
+/* ── Section ── */
+.section { display: flex; flex-direction: column; gap: var(--spacing-xs); }
+.section-label {
+  font-size: 0.75em;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.6;
+  margin-bottom: 2px;
+}
+
+/* ── Stale branches ── */
+.stale-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-sm);
+  background: var(--vscode-list-hoverBackground);
+  border-radius: var(--radius);
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.stale-info { display: flex; flex-direction: column; gap: 2px; }
+.stale-actions { display: flex; gap: var(--spacing-xs); flex-shrink: 0; }
+
+.action-btn {
+  padding: 2px var(--spacing-sm);
+  border: 1px solid var(--vscode-button-border, transparent);
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 0.8em;
+  background: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+}
+
+.action-btn:hover { background: var(--vscode-button-secondaryHoverBackground); }
+.delete-btn { border-color: var(--red); color: var(--red); }
+.merge-btn  { border-color: var(--green); color: var(--green); }
+.revive-btn { border-color: var(--blue); color: var(--blue); }
+
+/* ── Chips ── */
+.chips-container { display: flex; flex-wrap: wrap; gap: var(--spacing-xs); }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px var(--spacing-sm);
+  border-radius: 999px;
+  font-size: 0.8em;
+  border: 1px solid var(--vscode-button-border, transparent);
+  background: var(--vscode-badge-background);
+  color: var(--vscode-badge-foreground);
+  cursor: pointer;
+  user-select: none;
+}
+
+.chip.sel {
+  background: var(--green);
+  color: #fff;
+  border-color: var(--green);
+}
+
+.chip-remove { opacity: 0.7; font-size: 1em; }
+.chip-remove:hover { opacity: 1; }
+
+/* ── Keyword input ── */
+.input-row { display: flex; gap: var(--spacing-xs); }
+
+input[type="text"] {
+  flex: 1;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: var(--vscode-input-background);
+  color: var(--vscode-input-foreground);
+  border: 1px solid var(--vscode-input-border);
+  border-radius: var(--radius);
+  font-size: 0.9em;
+  outline: none;
+}
+
+input[type="text"]:focus { border-color: var(--blue); }
+.hint { font-size: 0.75em; opacity: 0.5; }
+
+/* ── Branch suggestion ── */
+.suggestion-section { align-items: flex-start; }
+.branch-suggestion {
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: 1em;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--vscode-editor-background);
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: var(--radius);
+}
+
+.branch-prefix { opacity: 0.5; }
+
+.copy-btn {
+  margin-top: var(--spacing-xs);
+  padding: 2px var(--spacing-sm);
+  background: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 0.8em;
+}
+
+/* ── Suggestion cards ── */
+.suggestion-card {
+  padding: var(--spacing-md);
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.suggestion-card.stale { opacity: 0.5; }
+
+.suggestion-header { display: flex; align-items: center; gap: var(--spacing-xs); }
+
+.suggestion-type {
+  font-size: 0.7em;
+  text-transform: uppercase;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--vscode-badge-background);
+  color: var(--vscode-badge-foreground);
+}
+
+.suggestion-action {
+  margin-top: var(--spacing-xs);
+  font-size: 0.8em;
+}
+
+.suggestion-action code {
+  background: var(--vscode-textCodeBlock-background);
+  padding: 1px 6px;
+  border-radius: var(--radius);
+  font-family: var(--vscode-editor-font-family, monospace);
+}
+
+/* ── Badges ── */
+.badge {
+  font-size: 0.7em;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-weight: 500;
+}
+
+.badge-cached { background: var(--amber); color: #000; }
+.badge-stale  { background: var(--vscode-badge-background); opacity: 0.6; }
+
+/* ── Banner ── */
+.banner {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius);
+  font-size: 0.85em;
+}
+
+.banner-warning {
+  background: rgba(255, 152, 0, 0.15);
+  border: 1px solid var(--amber);
+  color: var(--amber);
+}
+
+/* ── Inference loading indicator ── */
+.inference-loading {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: 0.8em;
+  opacity: 0.7;
+}
+
+.inference-loading .spinner {
+  width: 14px;
+  height: 14px;
+  border-width: 1.5px;
+  flex-shrink: 0;
+}
+
+/* ── Utility ── */
+.muted { opacity: 0.6; }
+.branch-name { font-family: var(--vscode-editor-font-family, monospace); font-size: 0.9em; }
+.naming-row { display: flex; gap: var(--spacing-sm); align-items: center; flex-wrap: wrap; }
+.convention code { font-size: 0.85em; }

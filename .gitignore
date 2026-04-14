@@ -1,0 +1,36 @@
+# ── Python ────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+
+# Virtual environment
+server/.venv/
+
+# Distribution / packaging
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Test cache
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ── Logs ──────────────────────────────────────────────────────────────────
+*.log
+server/logs/*.log
+
+# ── Worktrees ─────────────────────────────────────────────────────────────
+.worktrees/
+
+# ── Misc ──────────────────────────────────────────────────────────────────
+TODOS.md
+.DS_Store
+.env
+.env.*
+.superpowers
+docs/
+/node_modules
+/.branchmind
