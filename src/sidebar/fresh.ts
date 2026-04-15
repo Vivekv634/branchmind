@@ -20,34 +20,44 @@ export function getFreshRepoHTML(signals: ProjectSignal, savedKeywords: string[]
   const inferredChipsHTML = inferredChips
     .map(chip => {
       const selected = allKeywords.includes(chip);
-      return `<span class="chip inferred${selected ? ' sel' : ''}" data-value="${escapeHtml(chip)}">${escapeHtml(chip)} <span class="chip-remove" data-value="${escapeHtml(chip)}">×</span></span>`;
+      return `<span class="chip inferred${selected ? ' sel' : ''}" data-value="${escapeHtml(chip)}" role="checkbox" aria-checked="${selected}">${escapeHtml(chip)} <span class="chip-remove" role="button" tabindex="0" aria-label="Remove ${escapeHtml(chip)}">×</span></span>`;
     })
     .join('');
 
   const userChipsHTML = savedKeywords
     .filter(k => !inferredChips.includes(k))
-    .map(k => `<span class="chip user sel" data-value="${escapeHtml(k)}">${escapeHtml(k)} <span class="chip-remove" data-value="${escapeHtml(k)}">×</span></span>`)
+    .map(k => `<span class="chip user sel" data-value="${escapeHtml(k)}" role="checkbox" aria-checked="true">${escapeHtml(k)} <span class="chip-remove" role="button" tabindex="0" aria-label="Remove ${escapeHtml(k)}">×</span></span>`)
     .join('');
 
   return `
 <div class="panel fresh-panel">
-  <div class="tip-card">
-    <span class="tip-icon">$(rocket)</span>
+
+  <!-- ── Tip banner ──────────────────────────────────── -->
+  <div class="bm-tip-row">
+    <span class="bm-tip-icon">◎</span>
     <div>
-      <strong>Fresh repo detected</strong>
-      <p>Inferred from workspace files. Select what applies to your project.</p>
+      <div class="bm-tip-title">Fresh repo detected</div>
+      <div class="bm-tip-desc">Inferred from workspace files. Select what applies to your project.</div>
     </div>
   </div>
 
-  <div class="section">
-    <div class="section-label">Inferred context</div>
+  <!-- ── Inferred context ────────────────────────────── -->
+  <div class="bm-section">
+    <div class="bm-section-header">
+      <span class="bm-section-icon">⊙</span>
+      Inferred Context
+    </div>
     <div class="chips-container" id="inferred-chips">
-      ${inferredChipsHTML || '<span class="muted">No signals detected</span>'}
+      ${inferredChipsHTML || '<span class="bm-empty" style="padding-left:0">No signals detected</span>'}
     </div>
   </div>
 
-  <div class="section">
-    <div class="section-label">Your keywords</div>
+  <!-- ── Your keywords ───────────────────────────────── -->
+  <div class="bm-section">
+    <div class="bm-section-header">
+      <span class="bm-section-icon">✎</span>
+      Your Keywords
+    </div>
     <div class="chips-container" id="user-chips">
       ${userChipsHTML}
     </div>
@@ -55,19 +65,24 @@ export function getFreshRepoHTML(signals: ProjectSignal, savedKeywords: string[]
       <input
         type="text"
         id="keyword-input"
-        placeholder="e.g. solo dev, auth, payments"
+        placeholder="e.g. auth, payments, solo dev"
         autocomplete="off"
       />
     </div>
     <div class="hint">Separate with commas or press Enter</div>
   </div>
 
-  <div class="section suggestion-section">
-    <div class="section-label">Suggested first branch</div>
+  <!-- ── Suggested first branch ──────────────────────── -->
+  <div class="bm-section">
+    <div class="bm-section-header">
+      <span class="bm-section-icon">⎇</span>
+      Suggested First Branch
+    </div>
     <div class="branch-suggestion" id="branch-suggestion">
       <span class="branch-prefix">feat/</span><span id="branch-slug">setup</span>
     </div>
-    <button class="copy-btn" id="copy-branch-btn">$(copy) Copy</button>
+    <button class="copy-btn" id="copy-branch-btn">⎘ Copy</button>
   </div>
+
 </div>`;
 }

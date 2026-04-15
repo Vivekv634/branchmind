@@ -24,8 +24,10 @@ const PATTERNS: RedactionPattern[] = [
   { name: 'slack-token', pattern: /\b(xoxb-|xoxp-)[A-Za-z0-9-]{40,}\b/g },
   // Firebase private key (JSON field)
   { name: 'firebase-private-key', pattern: /"private_key"\s*:\s*"[^"]{20,}"/g },
-  // Supabase anon/service keys (long base64-like JWT)
-  { name: 'supabase-key', pattern: /\bey[A-Za-z0-9_-]{50,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b/g },
+  // JWT-shaped tokens (Supabase anon/service, Clerk, Firebase auth, etc.)
+  // JWT headers are always ~34 chars after "ey", so {50,} never matched — fixed to {10,}.
+  // The middle payload segment (claim set) is typically 80–200 chars, so {30,} is a safe floor.
+  { name: 'supabase-key', pattern: /\bey[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{30,}\.[A-Za-z0-9_-]{10,}\b/g },
   // Stripe keys
   { name: 'stripe-key', pattern: /\b(sk_live_|sk_test_|pk_live_|pk_test_)[A-Za-z0-9]{20,}\b/g },
   // Razorpay keys (India-specific)

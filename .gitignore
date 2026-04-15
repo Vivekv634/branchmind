@@ -34,3 +34,4 @@ TODOS.md
 docs/
 /node_modules
 /.branchmind
+.vscode*

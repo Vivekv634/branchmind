@@ -63,13 +63,13 @@ export function readConfig(workspacePath?: string): BranchMindConfig {
 
 export function writeConfig(config: BranchMindConfig, workspacePath?: string): void {
   const dir = getConfigDir(workspacePath);
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  const isNew = !fs.existsSync(dir);
+  if (isNew) fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(getConfigPath(workspacePath), JSON.stringify(config, null, 2), 'utf8');
 
-  // Guard: if apiKey field ever gets added, protect config.json in .gitignore
-  if ((config as unknown as Record<string, unknown>)['apiKey']) {
-    guardGitignore(workspacePath);
-  }
+  // Always ignore the entire .branchmind/ folder — it contains local machine
+  // state (selected model, cached audit) that should never be committed.
+  if (isNew) guardGitignore(workspacePath);
 }
 
 export function mergeConfig(partial: Partial<BranchMindConfig>): BranchMindConfig {
@@ -86,17 +86,18 @@ export function mergeConfig(partial: Partial<BranchMindConfig>): BranchMindConfi
 function guardGitignore(workspacePath?: string): void {
   const root = workspacePath ?? vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? process.cwd();
   const gitignorePath = path.join(root, '.gitignore');
-  const entry = '.branchmind/config.json';
+  const entry = '.branchmind/';
 
   try {
     const existing = fs.existsSync(gitignorePath)
       ? fs.readFileSync(gitignorePath, 'utf8')
       : '';
 
-    if (!existing.includes(entry)) {
-      fs.appendFileSync(gitignorePath, `\n${entry}\n`, 'utf8');
+    // Match the folder entry with or without a trailing slash to avoid duplicates.
+    if (!existing.split('\n').some(line => line.trim() === '.branchmind/' || line.trim() === '.branchmind')) {
+      fs.appendFileSync(gitignorePath, `\n# BranchMind local state (machine-specific, do not commit)\n${entry}\n`, 'utf8');
       vscode.window.showInformationMessage(
-        'BranchMind: Added config.json to .gitignore to protect your API key.'
+        'BranchMind: Added .branchmind/ to .gitignore — local model config and cache are machine-specific.'
       );
     }
   } catch { /* non-fatal */ }

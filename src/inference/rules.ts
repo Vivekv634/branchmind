@@ -23,7 +23,9 @@ export interface Suggestion {
 const COMMIT_TYPE_SIGNALS: Record<string, string[]> = {
   feat: ['add', 'implement', 'create', 'new', 'feature', 'build', 'introduce'],
   fix: ['fix', 'bug', 'patch', 'resolve', 'correct', 'repair', 'hotfix'],
-  chore: ['chore', 'bump', 'update', 'upgrade', 'dependency', 'deps', 'version'],
+  // 'update' removed — it is too generic and caused "update readme" to be classified
+  // as chore instead of docs. The function defaults to 'chore' at the end anyway.
+  chore: ['chore', 'bump', 'upgrade', 'dependency', 'deps', 'version'],
   docs: ['doc', 'docs', 'readme', 'comment', 'changelog', 'jsdoc', 'docstring'],
   refactor: ['refactor', 'clean', 'restructure', 'reorganize', 'move', 'rename'],
   test: ['test', 'spec', 'coverage', 'unit', 'integration', 'e2e'],
@@ -43,12 +45,37 @@ const FILE_PATH_SIGNALS: Record<string, string> = {
   'less': 'style',
 };
 
+/**
+ * Score every commit type against the message, return the highest-scoring winner.
+ * Ties are broken by the iteration order of COMMIT_TYPE_SIGNALS (most specific first).
+ * Falls back to 'chore' when no signal matches.
+ *
+ * Scoring catches mixed-signal messages like "refactor and fix login bug" (both
+ * 'refactor' and 'fix' score 1 each; 'fix' wins because it appears earlier than
+ * 'refactor' in the signal map and we sort stably with Array.sort).
+ */
 function detectTypeFromText(text: string): string {
   const lower = text.toLowerCase();
+  const scores: Record<string, number> = {};
+
   for (const [type, signals] of Object.entries(COMMIT_TYPE_SIGNALS)) {
-    if (signals.some(s => lower.includes(s))) return type;
+    for (const signal of signals) {
+      if (lower.includes(signal)) {
+        scores[type] = (scores[type] ?? 0) + 1;
+      }
+    }
   }
-  return 'chore';
+
+  if (Object.keys(scores).length === 0) return 'chore';
+
+  // Pick the type with the most signal hits; preserve insertion order on ties
+  // (COMMIT_TYPE_SIGNALS is ordered from most-specific to least-specific).
+  let best = '';
+  let bestScore = 0;
+  for (const [type, score] of Object.entries(scores)) {
+    if (score > bestScore) { best = type; bestScore = score; }
+  }
+  return best;
 }
 
 function detectTypeFromFiles(files: string[]): string {

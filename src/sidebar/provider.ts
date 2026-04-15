@@ -8,9 +8,17 @@ export class BranchMindSidebarProvider implements vscode.WebviewViewProvider {
   private _view?: vscode.WebviewView;
   private _extensionUri: vscode.Uri;
 
-  // Stored so it survives webview disposal/re-creation.
-  // resolveWebviewView always registers a forwarder that calls this.
+  /**
+   * HTML queued by setHTML() before the view has resolved.
+   * Applied immediately in resolveWebviewView() so the panel renders correctly
+   * on first open even when activate() fires before the user opens the sidebar.
+   */
+  private _pendingHTML?: string;
+
   private _messageHandler?: (msg: Record<string, unknown>) => void;
+
+  /** Called by extension.ts when the view first resolves, so a fresh render can be requested. */
+  private _onResolveCallback?: () => void;
 
   constructor(extensionUri: vscode.Uri) {
     this._extensionUri = extensionUri;
@@ -28,14 +36,21 @@ export class BranchMindSidebarProvider implements vscode.WebviewViewProvider {
       localResourceRoots: [this._extensionUri],
     };
 
-    // Forward all incoming messages to whatever handler is currently registered.
-    // Using a single forwarder means re-registering the handler after disposal
-    // is not needed — only _messageHandler needs to be updated.
     webviewView.webview.onDidReceiveMessage(msg => {
       this._messageHandler?.(msg as Record<string, unknown>);
     });
 
-    webviewView.webview.html = this._getLoadingHTML();
+    // Apply any HTML that was queued before the view resolved.
+    if (this._pendingHTML !== undefined) {
+      webviewView.webview.html = this._wrapHTML(this._pendingHTML);
+      this._pendingHTML = undefined;
+    } else {
+      webviewView.webview.html = this._getLoadingHTML();
+    }
+
+    // Notify extension.ts so it can re-render if the view was previously closed
+    // and context was lost (retainContextWhenHidden is false to save memory).
+    this._onResolveCallback?.();
   }
 
   /** Send a message to the webview. No-op if the view is not yet resolved. */
@@ -43,19 +58,31 @@ export class BranchMindSidebarProvider implements vscode.WebviewViewProvider {
     this._view?.webview.postMessage(message);
   }
 
-  /** Replace the entire webview body content. */
+  /**
+   * Replace the entire webview body content.
+   * If called before the view has resolved, queues the HTML so it is applied
+   * the moment the user opens the sidebar.
+   */
   public setHTML(html: string): void {
-    if (!this._view) return;
+    if (!this._view) {
+      this._pendingHTML = html;
+      return;
+    }
     this._view.webview.html = this._wrapHTML(html);
   }
 
-  /**
-   * Register the handler for messages from the webview.
-   * Safe to call before the view resolves — the handler is stored and forwarded
-   * once resolveWebviewView fires.
-   */
   public onMessage(handler: (msg: Record<string, unknown>) => void): void {
     this._messageHandler = handler;
+  }
+
+  /**
+   * Register a callback to run when the view resolves (i.e. the sidebar is opened).
+   * If the view is already resolved, the callback fires immediately.
+   * Use this to trigger a fresh render whenever the panel becomes visible.
+   */
+  public onResolve(callback: () => void): void {
+    this._onResolveCallback = callback;
+    if (this._view) callback();
   }
 
   private _wrapHTML(bodyContent: string): string {
@@ -63,7 +90,6 @@ export class BranchMindSidebarProvider implements vscode.WebviewViewProvider {
       vscode.Uri.joinPath(this._extensionUri, 'webview', 'main.js')
     );
 
-    // Inline styles to avoid CSP URI issues during development
     const stylesPath = path.join(this._extensionUri.fsPath, 'webview', 'styles.css');
     const inlineStyles = fs.existsSync(stylesPath)
       ? `<style>${fs.readFileSync(stylesPath, 'utf8')}</style>`

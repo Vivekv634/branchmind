@@ -44,7 +44,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(
       BranchMindSidebarProvider.viewType,
-      sidebarProvider
+      sidebarProvider,
+      // Keep the webview alive when the sidebar is collapsed so JS state
+      // (stale timers, suggestion cache) is not lost on every hide/show.
+      { webviewOptions: { retainContextWhenHidden: true } }
     )
   );
 
@@ -66,6 +69,14 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   // Wire sidebar message handler
   sidebarProvider.onMessage(msg => handleWebviewMessage(msg as Record<string, unknown>, workspacePath));
+
+  // Re-render whenever the user opens the sidebar (view resolves).
+  // This ensures the health panel is shown even when the view was not yet
+  // visible at activation time and setHTML()'s initial call was queued.
+  sidebarProvider.onResolve(async () => {
+    const router = getCachedResult();
+    if (router) await refreshSidebar(router, workspacePath);
+  });
 
   // Initial probe
   const routerResult = await probe(workspacePath);
@@ -117,8 +128,12 @@ async function refreshSidebar(router: RouterResult, workspacePath?: string): Pro
   if (!sidebarProvider) return;
 
   try {
-    const commitHistory = await git.getCommitHistory(5, workspacePath);
-    const isFreshRepo = commitHistory.length < 5;
+    const commitHistory = await git.getCommitHistory(1, workspacePath);
+    // "Fresh repo" = no commits at all (just `git init`, nothing committed).
+    // Repos with even 1 commit have enough history for health analysis.
+    // The previous threshold of < 5 wrongly treated any small repo (including
+    // branchmind itself) as fresh, hiding the health / branch panels entirely.
+    const isFreshRepo = commitHistory.length === 0;
 
     if (isFreshRepo) {
       const signals = scanWorkspace(workspacePath);
@@ -388,6 +403,52 @@ async function handleWebviewMessage(
       const terminal = vscode.window.createTerminal('BranchMind: Revive');
       terminal.sendText(`git checkout -b ${branch}-revived`);
       terminal.show();
+      break;
+    }
+
+    case 'renameBranch': {
+      const branch     = msg.branch     as string;
+      const convention = msg.convention as string;
+
+      // Build a suggested name from the existing branch slug + the dominant prefix.
+      // e.g. "wip-login" + "feat/" → "feat/wip-login"
+      const firstPrefix = (convention.split(' ')[0] ?? 'feat/').replace(/\s/g, '');
+      const slug = branch
+        .replace(/^[a-z]+\//, '')          // strip any existing prefix
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '')
+        .slice(0, 50);
+      const suggested = `${firstPrefix}${slug}`;
+
+      const newName = await vscode.window.showInputBox({
+        title: `BranchMind — Rename branch "${branch}"`,
+        prompt: 'Enter the new branch name',
+        value: suggested,
+        validateInput: v => {
+          if (!v) return 'Name cannot be empty';
+          if (/\s/.test(v)) return 'Branch names cannot contain spaces';
+          return null;
+        },
+      });
+
+      if (!newName || newName === branch) break;
+
+      try {
+        const sg = simpleGit(workspacePath);
+        const current = await git.getCurrentBranch(workspacePath);
+        if (current === branch) {
+          // Rename currently-checked-out branch — safe with -m
+          await sg.branch(['-m', newName]);
+        } else {
+          await sg.branch(['-m', branch, newName]);
+        }
+        vscode.window.showInformationMessage(`BranchMind: Renamed "${branch}" → "${newName}".`);
+        const router = getCachedResult();
+        if (router) await refreshSidebar(router, workspacePath);
+      } catch (e) {
+        vscode.window.showErrorMessage(`BranchMind: Rename failed — ${String(e)}`);
+      }
       break;
     }
   }

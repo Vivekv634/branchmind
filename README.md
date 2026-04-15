@@ -64,7 +64,7 @@ BranchMind detects Turborepo, Nx, Lerna, and pnpm workspace layouts and scopes b
 
 ## Extension settings
 
-BranchMind stores per-project config in `.branchmind/config.json` inside your repository. This file is **not** added to `.gitignore` by default so project keywords are shared with your team. If you ever add an `apiKey` field, BranchMind automatically appends the config path to `.gitignore`.
+BranchMind stores per-project state in a `.branchmind/` folder inside your repository (selected model, cached audit results, config). On first use, BranchMind automatically appends `.branchmind/` to your `.gitignore` — this folder contains machine-specific settings that should not be committed.
 
 ---
 

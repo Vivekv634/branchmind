@@ -120,7 +120,9 @@ export function getSuggestionsHTML(
   isCached = false
 ): string {
   if (suggestions.length === 0) {
-    return '<div class="panel suggestions-panel"><p class="muted">No suggestions right now.</p></div>';
+    return `<div class="panel suggestions-panel">
+      <div class="bm-empty" style="padding: 8px 12px; font-style:italic; opacity:0.5; font-size:0.82em;">No suggestions right now.</div>
+    </div>`;
   }
 
   const badge = isCached
@@ -139,7 +141,14 @@ export function getSuggestionsHTML(
       ${s.action ? `<div class="suggestion-action"><code>${s.action}</code></div>` : ''}
     </div>`).join('');
 
-  return `<div class="panel suggestions-panel">${cards}</div>`;
+  return `<div class="panel suggestions-panel">
+    <div class="bm-section-header" style="margin-top:4px">
+      <span class="bm-section-icon">◈</span>
+      Suggestions
+      <span class="bm-section-count">${suggestions.length}</span>
+    </div>
+    ${cards}
+  </div>`;
 }
 
 export async function buildSuggestionContext(

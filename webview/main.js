@@ -58,13 +58,15 @@
     if (!target) return;
 
     if (target.classList.contains('chip-remove')) {
-      const value = target.dataset.value;
+      // data-value lives only on the outer .chip span — read it via closest()
+      const value = target.closest('.chip')?.dataset.value;
       if (value) removeChip(value);
       return;
     }
 
     if (target.classList.contains('chip') && target.classList.contains('inferred')) {
       target.classList.toggle('sel');
+      target.setAttribute('aria-checked', String(target.classList.contains('sel')));
       updateBranchSuggestion();
       notifyKeywordChange();
       return;
@@ -87,6 +89,27 @@
       vscode.postMessage({ type: 'deleteBranch', branch: target.dataset.branch });
     if (target.classList.contains('revive-btn'))
       vscode.postMessage({ type: 'reviveBranch', branch: target.dataset.branch });
+    if (target.classList.contains('rename-btn'))
+      vscode.postMessage({ type: 'renameBranch', branch: target.dataset.branch, convention: target.dataset.convention });
+  });
+
+  // ── Keyboard support for chip-remove buttons ─────────────────────────────
+  // chip-remove spans have tabindex="0" so they receive keyboard focus.
+  // Enter / Space should trigger removal exactly as a click would.
+  document.addEventListener('keydown', (e) => {
+    if ((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('chip-remove')) {
+      e.preventDefault();
+      const value = e.target.closest('.chip')?.dataset.value;
+      if (value) removeChip(value);
+    }
+    // Space on an inferred chip toggles its selection
+    if (e.key === ' ' && e.target.classList.contains('chip') && e.target.classList.contains('inferred')) {
+      e.preventDefault();
+      e.target.classList.toggle('sel');
+      e.target.setAttribute('aria-checked', String(e.target.classList.contains('sel')));
+      updateBranchSuggestion();
+      notifyKeywordChange();
+    }
   });
 
   // Keyword input — comma or Enter commits tokens as chips
